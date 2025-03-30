@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cow.horse.mapper.OrdersMapper">
+    <select id="finPage" resultType="com.cow.horse.entity.Orders">
+        select o.*,u.username,u.nickname,s.name as stateName
+        from sys_orders o
+        left join sys_user u
+        on o.user_id = u.id
+        left join sys_state s
+        on o.state = s.id
+        <where>
+            <if test="state !=0">
+                and o.state = #{state}
+            </if>
+            <if test="name !=null and name!=''">
+                and o.name like concat('%',#{name},'%')
+            </if>
+            <if test="role =='ROLE_USER'">
+                and o.user_id=#{userId}
+                and o.is_delete!=1
+            </if>
+        </where>
+        order by o.id desc
+    </select>
+
+    <select id="selectSale" resultType="java.lang.Double">
+        select sum(all_price) as sale
+        from sys_orders
+        where sys_orders.state in ('3', '4', '5', '6')
+    </select>
+
+    <select id="selectSaleToday" resultType="java.lang.Integer">
+        select count(*) as sale
+        from sys_orders
+        where sys_orders.state in ('3', '4', '5', '6')
+          and create_time BETWEEN #{str}
+            and #{str1}
+    </select>
+
+    <select id="members" resultType="java.lang.String">
+        SELECT IFNULL(t2.allPrice, 0) as allPrice
+        FROM (
+                 SELECT RIGHT ( date_add( DATE_SUB(date_format(#{queryStartTime,jdbcType=TIMESTAMP}, '%Y-%m-%d'), INTERVAL 1 DAY ), INTERVAL ( cast(help_topic_id AS signed INTEGER ) + 1 ) DAY ), 5 ) dateTime
+                 FROM mysql.help_topic
+                 WHERE help_topic_id
+                  &lt; DATEDIFF(#{queryEndTime,jdbcType=TIMESTAMP}
+                     , date_sub(#{queryStartTime,jdbcType=TIMESTAMP}
+                     , INTERVAL 1 DAY ))
+             ) t1
+                 left join (
+            select c.name, sum(o.all_price) as allPrice, date_format(o.create_time, '%m-%d') as month
+            from sys_orders o
+                left join sys_orders_product op
+            on o.id = op.order_id
+                left join sys_product p on p.id = op.product_id
+                left join sys_classification c on c.id = p.classification_id
+            where c.name=#{city}
+            group by c.name, c.id, date_format(o.create_time, '%m-%d')
+        ) t2 ON t1.dateTime = t2.month
+        ORDER BY t1.dateTime asc
+    </select>
+
+    <select id="dateTime" resultType="java.lang.String">
+        SELECT t1.dateTime
+        FROM (
+                 SELECT RIGHT ( date_add( DATE_SUB(date_format(#{queryStartTime,jdbcType=TIMESTAMP}, '%Y-%m-%d'), INTERVAL 1 DAY ), INTERVAL ( cast(help_topic_id AS signed INTEGER ) + 1 ) DAY ), 5 ) dateTime
+                 FROM mysql.help_topic
+                 WHERE help_topic_id
+                  &lt; DATEDIFF(#{queryEndTime,jdbcType=TIMESTAMP}
+                     , date_sub(#{queryStartTime,jdbcType=TIMESTAMP}
+                     , INTERVAL 1 DAY ))
+             ) t1
+    </select>
+
+
+</mapper>

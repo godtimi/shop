@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cow.horse.mapper.CartMapper">
+
+    <select id="page" resultType="com.cow.horse.entity.Cart">
+        select c.* , p.name as productName ,p.sell_price as productPrice,p.url as
+        productUrl,u.username,u.nickname,p.store
+        from sys_cart c
+        left join sys_product p
+        on c.product_id = p.id
+        left join sys_user u
+        on c.user_id = u.id
+        <where>
+            and p.is_delete!=true
+            <if test="name !=null and name!=''">
+                and p.name like concat('%',#{name},'%')
+            </if>
+            <if test="role == 'ROLE_USER'">
+                and c.user_id = #{userId}
+            </if>
+        </where>
+        order by c.id desc
+    </select>
+
+
+    <update id="updateNum">
+        update sys_cart
+        set num=#{num}
+        where id = #{id}
+    </update>
+</mapper>

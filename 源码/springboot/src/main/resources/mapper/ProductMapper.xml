@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cow.horse.mapper.ProductMapper">
+    <select id="findPage" resultType="com.cow.horse.entity.Product">
+        SELECT p.*,
+        c.name as classificationName
+        FROM sys_product p
+        LEFT JOIN sys_classification c
+        ON p.classification_id = c.id
+        <where>
+            and p.is_delete = false
+            <if test="name !=null and name!=''">
+                and p.name like concat('%',#{name},'%')
+            </if>
+            <if test="role =='ROLE_USER'">
+                and put_on_the_shelf = true
+            </if>
+        </where>
+    </select>
+    <select id="findLovely" resultType="java.lang.Integer">
+        select cid
+        from sys_user_visit_log
+        where DATEDIFF(CURDATE(), DATE(created_time)) &lt; 7
+          and uid = #{uid}
+        group by cid
+        order by count(*) desc limit 1
+    </select>
+
+    <!-- order by rand() 在超过7万条数据以上不要用   -->
+    <select id="listByCid" resultType="com.cow.horse.entity.Product">
+        select *
+        from sys_product
+        where classification_id = #{cid}
+          and city = #{city}
+          and is_delete = false
+        order by rand() limit 5
+    </select>
+    <select id="findPages" resultType="com.cow.horse.entity.Product">
+        SELECT p.*,
+        c.name as classificationName
+        FROM sys_product p
+        LEFT JOIN sys_classification c
+        ON p.classification_id = c.id
+        <where>
+            and p.city = #{city}
+            and p.is_delete = false
+            and put_on_the_shelf = true
+            <if test="name !=null and name!=''">
+                and p.name like concat('%',#{name},'%')
+            </if>
+        </where>
+    </select>
+
+
+</mapper>
